@@ -1,0 +1,12 @@
+.navbar {
+  display:flex; align-items:center; justify-content:space-between;
+  background:#18a558; color:white; padding:14px 20px;
+}
+.logo { font-weight:700; font-size:1.4rem; }
+.navbar-links { list-style:none; display:flex; gap:80px; margin:0; padding:5; align-items:center; }
+.navbar-links li a { color:rgb(28, 27, 27); font-weight:600; }
+.navbar-links li a:hover { color:#4438f3; }
+.navbar-search input { padding:8px 10px; border-radius:50px; border:none; }
+@media (max-width:800px){
+  .navbar-links { display:none; }
+}

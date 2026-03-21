@@ -1,12 +1,25 @@
-.venv/
-venv/
-backend/.venv/
+# Python
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
-*.dll
-*.exe
-*.pt
+
+# Virtual env
+venv/
+.venv/
+backend/.venv/
+
+# Node
+node_modules/
+
+# Env files
 .env
+frontend/.env
+backend/.env
+
+# Models
+*.pt
+*.pth
+
+# VS Code
 .vscode/

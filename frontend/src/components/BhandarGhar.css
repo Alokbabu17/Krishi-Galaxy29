@@ -1,0 +1,20 @@
+.bhandar-page { padding: 20px; font-family: Arial, sans-serif; }
+.fetch-panel { text-align: center; margin-bottom: 16px; }
+.fetch-btn { padding: 12px 18px; background:#2e7d32; color:#fff; border:none; border-radius:8px; cursor:pointer; font-weight:bold; }
+.bhandar-layout { display:flex; gap:20px; max-width:1200px; margin:0 auto; align-items:flex-start; }
+.store-list { width: 36%; background:#fff; border:2px solid #e0e0e0; padding:12px; border-radius:8px; max-height:600px; overflow:auto; }
+.store-item { padding:10px; border-bottom:1px solid #eee; }
+.store-title { font-weight:bold; font-size:16px; }
+.store-addr { color:#555; font-size:13px; margin-top:6px; }
+.store-dist { margin-top:8px; font-size:13px; color:#333; }
+.store-actions { margin-top:8px; }
+.store-actions button { padding:8px 10px; background:#0288d1; color:#fff; border:none; border-radius:6px; cursor:pointer; }
+
+.map-area { flex:1; display:flex; flex-direction:column; gap:8px; min-height:400px; }
+.map-wrapper { height: 420px; border-radius:8px; overflow:hidden; }
+.map-info { background:#fff; padding:8px; border-radius:8px; border:1px solid #ddd; }
+@media (max-width:900px) {
+  .bhandar-layout { flex-direction:column; }
+  .store-list { width:100%; }
+  .map-area { width:100%; }
+}
