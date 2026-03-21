@@ -1,0 +1,13 @@
+flask
+flask-cors
+requests
+pymongo
+python-dotenv
+ultralytics
+opencv-python
+numpy
+pyserial
+pydub
+SpeechRecognition
+edge-tts
+groq
