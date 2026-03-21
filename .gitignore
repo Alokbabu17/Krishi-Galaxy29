@@ -1,0 +1,12 @@
+.venv/
+venv/
+backend/.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.dll
+*.exe
+*.pt
+.env
+.vscode/
