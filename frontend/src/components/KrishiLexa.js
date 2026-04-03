@@ -2,93 +2,166 @@ import React, { useState } from "react";
 import "./KrishiLexa.css";
 
 function KrishiLexa() {
-  const [answer, setAnswer]   = useState("");
-  const [userText, setUserText] = useState("");   // ✅ NEW: user ne kya bola
+  const [answer, setAnswer] = useState("");
+  const [userText, setUserText] = useState("");
   const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState("idle");
 
   const startRecording = async () => {
     try {
-      const stream        = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
-      let chunks          = [];
+      setStatus("listening");
 
-      mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      let chunks = [];
+
+      const audioContext = new AudioContext();
+      const source = audioContext.createMediaStreamSource(stream);
+      const analyser = audioContext.createAnalyser();
+      source.connect(analyser);
+
+      const dataArray = new Uint8Array(analyser.fftSize);
+
+      let silenceStart = null;
+      let recording = true;
+
+      mediaRecorder.ondataavailable = (e) => {
+        chunks.push(e.data);
+      };
+
+      mediaRecorder.start();
+
+      // Silence detection loop
+      const detectSilence = () => {
+        if (!recording) return;
+
+        analyser.getByteTimeDomainData(dataArray);
+        let silence = true;
+
+        for (let i = 0; i < dataArray.length; i++) {
+          if (Math.abs(dataArray[i] - 128) > 5) {
+            silence = false;
+            silenceStart = null;
+            break;
+          }
+        }
+
+        if (silence) {
+          if (!silenceStart) {
+            silenceStart = Date.now();
+          } else {
+            if (Date.now() - silenceStart > 2000) {
+              // 2 sec silence → stop recording
+              recording = false;
+              mediaRecorder.stop();
+              setStatus("thinking");
+              return;
+            }
+          }
+        }
+
+        requestAnimationFrame(detectSilence);
+      };
+
+      detectSilence();
 
       mediaRecorder.onstop = async () => {
-        const blob     = new Blob(chunks, { type: "audio/webm" });
+        const blob = new Blob(chunks, { type: "audio/webm" });
         const formData = new FormData();
         formData.append("file", blob, "input.webm");
 
         setLoading(true);
-        setUserText("");
-        setAnswer("");
 
         try {
           const response = await fetch("http://localhost:5000/voice", {
             method: "POST",
-            body:   formData,
+            body: formData,
           });
 
           const data = await response.json();
 
           if (data.status === "success") {
-
-            // ✅ UPDATED: user_text + reply (naye backend ke fields)
             setUserText(data.user_text || "");
-            setAnswer(data.reply      || "");
+            setAnswer(data.reply || "");
 
-            // ✅ UPDATED: base64 audio play karo
-            const audioBytes = atob(data.audio);
-            const arrayBuf   = new ArrayBuffer(audioBytes.length);
-            const view       = new Uint8Array(arrayBuf);
-            for (let i = 0; i < audioBytes.length; i++) {
-              view[i] = audioBytes.charCodeAt(i);
+            if (data.audio) {
+              const audio = new Audio("data:audio/mp3;base64," + data.audio);
+              audio.play();
             }
-            const audioBlob = new Blob([arrayBuf], { type: "audio/mp3" });
-            const audioUrl  = URL.createObjectURL(audioBlob);
-            const audio     = new Audio(audioUrl);
-            audio.play();
-
           } else {
-            setAnswer("❌ Error: " + (data.message || "Unknown error"));
+            setAnswer("Error: " + data.message);
           }
-
         } catch (err) {
-          setAnswer("⚠️ Request failed: " + err.message);
+          setAnswer("Request failed: " + err.message);
         }
 
         setLoading(false);
+        setStatus("idle");
       };
 
-      mediaRecorder.start();
-      setTimeout(() => mediaRecorder.stop(), 5000); // 5 sec recording
     } catch (err) {
-      setAnswer("🎤 Microphone error: " + err.message);
+      setAnswer("Mic error: " + err.message);
+      setStatus("idle");
     }
   };
 
   return (
     <div className="krishi-lexa-container">
       <div className="overlay">
-        <h1>🌾 Krishi-Lexa: Your AI Assistant</h1>
-
-        <button className="mic-btn" onClick={startRecording} disabled={loading}>
-          🎤 {loading ? "Listening..." : "Ask Krishi-Lexa"}
-        </button>
-
-        {/* ✅ NEW: User ne kya bola — dikhao */}
-        {userText && (
-          <div className="user-text-box">
-            <span className="label">🧑 Aapne poocha:</span>
-            <p>{userText}</p>
+        <div className="lexa-card">
+          <div className="lexa-header">
+            <div className="ai-orb"></div>
+            <h1 className="welcome-text">कृषि लेक्सा</h1>
+            <p className="sub-text">Aapki Modern Krishi Sahayak</p>
           </div>
-        )}
 
-        {/* AI ka reply */}
-        {answer && (
-          <pre className="answer-box">{answer}</pre>
-        )}
+          <div className="chat-container">
+            {userText && (
+              <div className="message user-message">
+                <span className="label">🧑 Aapne poocha:</span>
+                <p>{userText}</p>
+              </div>
+            )}
 
+            {status === "thinking" && (
+              <div className="message ai-message thinking-message">
+                <span className="label">🤖 Krishi Lexa:</span>
+                <div className="dot-typing"></div>
+              </div>
+            )}
+
+            {answer && status !== "thinking" && (
+              <div className="message ai-message">
+                <span className="label">🤖 Krishi Lexa:</span>
+                <p>{answer}</p>
+              </div>
+            )}
+          </div>
+
+          <div className="action-area">
+            {status === "listening" && (
+              <div className="listening-indicator">
+                <span>Sun rahi hoon...</span>
+                <div className="wave-container">
+                  <div className="wave"></div>
+                  <div className="wave"></div>
+                  <div className="wave"></div>
+                </div>
+              </div>
+            )}
+
+            <button 
+              className={`mic-btn ${status === 'listening' ? 'pulsing' : ''}`} 
+              onClick={startRecording} 
+              disabled={loading}
+            >
+              <span className="mic-icon">🎤</span>
+              <span className="btn-text">
+                {loading ? 'Processing...' : (status === 'listening' ? 'Listening...' : 'Tap to Speak')}
+              </span>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
