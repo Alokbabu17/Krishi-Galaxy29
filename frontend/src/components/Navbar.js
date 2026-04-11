@@ -5,31 +5,61 @@ import makeInIndiaLogo from "../public/images/king2.png";
 
 export default function Navbar() {
   return (
-    <nav className="navbar">
-      <div className="navbar-left">
-        <div className="logo">
+    <nav className="navbar glass-navbar">
+      <div className="navbar-brand">
+        <Link to="/">
           <img
             src={makeInIndiaLogo}
             alt="Make in India"
-            style={{ height: "60px", objectFit: "contain" }}
+            className="brand-logo"
           />
-        </div>
+        </Link>
       </div>
 
       <ul className="navbar-links">
-        <li><Link to="/">Home /<br />होम पर जाएं</Link></li>
-        <li><Link to="/yojna-info">Govt. Schemes /<br />सरकारी योजनायें</Link></li>
-        <li><Link to="/check-balance">Check Balance /<br />बैलेंस देखे</Link></li>
-        <li><Link to="/pest-check">Pest Detection /<br />कीट की जांच करे</Link></li>
-        <li><Link to="/bhandar-ghar">Cold Storage Locator /<br />भण्डार घर खोजे</Link></li>
-
-        {/* ✅ NEW: Krishi Lek-sha Voice Assistant */}
-        <li><Link to="/krishi-lexa">Krishi Lek-sha 🌾<br />कृषि लेक्षा</Link></li>
-
+        <li>
+          <Link to="/" className="nav-item">
+            <span className="en">Home</span>
+            <span className="hi">होम</span>
+          </Link>
+        </li>
+        <li>
+          <Link to="/yojna-info" className="nav-item">
+            <span className="en">Govt. Schemes</span>
+            <span className="hi">सरकारी योजनायें</span>
+          </Link>
+        </li>
+        <li>
+          <Link to="/check-balance" className="nav-item">
+            <span className="en">Check Balance</span>
+            <span className="hi">बैलेंस देखे</span>
+          </Link>
+        </li>
+        <li>
+          <Link to="/pest-check" className="nav-item">
+            <span className="en">Pest Detection</span>
+            <span className="hi">कीट जांच</span>
+          </Link>
+        </li>
+        <li>
+          <Link to="/bhandar-ghar" className="nav-item">
+            <span className="en">Cold Storage</span>
+            <span className="hi">भण्डार घर</span>
+          </Link>
+        </li>
+        <li>
+          <Link to="/krishi-lexa" className="nav-item highlight-item">
+            <span className="en">Krishi Lek-sha 🌾</span>
+            <span className="hi">कृषि लेक्षा</span>
+          </Link>
+        </li>
       </ul>
 
       <div className="navbar-search">
-        <input placeholder="Search / खोजें..." />
+        <div className="search-box">
+          <span className="search-icon">🔍</span>
+          <input type="text" placeholder="खोजें / Search..." />
+        </div>
       </div>
     </nav>
   );

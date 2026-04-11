@@ -120,7 +120,7 @@ def voice_assistant():
 
         # ===== AI PROMPT =====
         final_prompt = f"""
-        Tum Krishi Lexa ho, ek smart krishi sahayak.
+        Tum Krishi Lexa ho ek smart krishi sahayak.
 
         {sensor_text}
 
