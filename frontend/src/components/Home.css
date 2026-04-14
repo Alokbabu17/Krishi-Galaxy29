@@ -8,7 +8,7 @@ body {
 .home-container {
   min-height: 100vh;
   width: 100%;
-  background-image: url('../public/images/k3.jpg');
+  background-image: url('../public/images/test5.jpeg');
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
@@ -19,8 +19,8 @@ body {
 .home-overlay {
   min-height: 100vh;
   width: 100%;
-  background: linear-gradient(135deg, rgba(8, 20, 10, 0.75), rgba(20, 40, 25, 0.85));
-  backdrop-filter: blur(8px);
+  
+  backdrop-filter: blur(2px);
   -webkit-backdrop-filter: blur(8px);
   padding: 30px 20px;
   box-sizing: border-box;
@@ -35,17 +35,17 @@ body {
   font-size: 3.5rem;
   font-weight: 700;
   margin: 0 0 10px 0;
-  background: linear-gradient(to right, #00f2fe, #4facfe, #fff);
+  background:black;
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  text-shadow: 0 10px 20px rgba(0,0,0,0.2);
+  text-shadow: 0 10px 20px rgba(255, 222, 4, 0.218);
 }
 
 .hero-subtitle {
   font-size: 1.6rem;
-  font-weight: 400;
-  color: #b0c4de;
+  font-weight: 800;
+  color: #000000;
   margin: 0 0 25px 0;
   letter-spacing: 2px;
 }
@@ -54,23 +54,23 @@ body {
 .news-ticker-glass {
   max-width: 900px;
   margin: 0 auto;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+  background: rgba(255, 8, 8, 0.205);
+  border: 1px solid rgba(60, 3, 3, 0.2);
+  box-shadow: 0 8px 32px 0 rgba(255, 0, 0, 0.3);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border-radius: 50px;
   padding: 12px 25px;
-  color: #fff;
+  color: #000000;
   font-size: 1.2rem;
-  font-weight: 400;
+  font-weight: 900;
   overflow: hidden;
 }
 
 /* Main Layout */
 .main-layout {
   display: grid;
-  grid-template-columns: 1fr 3fr 1fr;
+  grid-template-columns: 1fr 2fr 1fr;
   gap: 30px;
   max-width: 1500px;
   margin: 0 auto;
@@ -79,10 +79,10 @@ body {
 
 /* Common Glass Widget styles for Calendar & Weather */
 .glass-widget {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(20px);
+  background: rgba(0, 0, 0, 0.05);
+  border: 10px solid rgb(255, 255, 255);
+  box-shadow: 0 10px 35px rgb(251, 255, 0);
+  backdrop-filter: blur(2px);
   -webkit-backdrop-filter: blur(20px);
   border-radius: 24px;
   padding: 35px 25px;
@@ -95,21 +95,21 @@ body {
 
 .glass-widget:hover {
   transform: translateY(-5px);
-  border-color: rgba(0, 242, 254, 0.3);
+  border-color: rgb(0, 198, 20);
   box-shadow: 0 20px 40px rgba(0, 242, 254, 0.15);
 }
 
 .calendar-day {
   font-size: 2.2rem;
-  font-weight: 600;
-  color: #4facfe;
+  font-weight: 60;
+  color: #000000;
   margin-bottom: 10px;
 }
 
 .calendar-date {
   font-size: 5rem;
   font-weight: 700;
-  background: linear-gradient(135deg, #fff, #a1c4fd);
+  background: linear-gradient(135deg, #000000, #080808);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -119,21 +119,22 @@ body {
 
 .calendar-month-year {
   font-size: 1.4rem;
-  color: #b0c4de;
-  font-weight: 300;
+  color: #ff0000;
+  font-weight: 700;
 }
 
 /* Weather Widget */
 .weather-widget h3 {
   margin: 0 0 20px 0;
-  color: #4facfe;
-  font-size: 1.6rem;
-  font-weight: 600;
+  color: #000000;
+  font-size: 1.8rem;
+  font-weight: 700;
 }
 
 .w-loc {
   font-size: 1.4rem;
   margin: 10px 0;
+  color: #000000;
   font-weight: 600;
 }
 
@@ -141,7 +142,7 @@ body {
   font-size: 2.5rem;
   font-weight: 700;
   margin: 15px 0;
-  background: linear-gradient(135deg, #fff, #ffdac1);
+  background: linear-gradient(135deg, #000000, #000000);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -149,7 +150,7 @@ body {
 
 .w-cond {
   font-size: 1.2rem;
-  color: #b0c4de;
+  color: #000000;
   margin-bottom: 15px;
 }
 
@@ -157,7 +158,7 @@ body {
   width: 80px;
   height: 80px;
   animation: float 3s ease-in-out infinite;
-  filter: drop-shadow(0 10px 15px rgba(0,0,0,0.3));
+  filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.3));
 }
 
 @keyframes float {
@@ -219,7 +220,7 @@ body {
 
 .glass-button:hover {
   transform: translateY(-8px) scale(1.02);
-  border-color: rgba(0, 242, 254, 0.5);
+  border-color: rgba(38, 254, 0, 0.5);
   box-shadow: 0 20px 40px rgba(0, 242, 254, 0.2);
 }
 

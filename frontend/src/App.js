@@ -13,6 +13,7 @@ import KrishiLexa from "./components/KrishiLexa";   // ✅ NEW import
 import BhandarGhar from "./components/BhandarGhar";
 import SmartSichai from "./components/SmartSichai";
 import "./App.css";
+import News from "./components/News"; 
 
 function App() {
   return (
@@ -31,8 +32,11 @@ function App() {
           <Route path="/krishi-lexa" element={<KrishiLexa />} />   {/* ✅ NEW route */}
           <Route path="/bhandar-ghar" element={<BhandarGhar />} />
           <Route path="/smart-sichai" element={<SmartSichai />} />
-
+           
         </Routes>
+          <div>
+      <News />   {/* YAHI lagana hai */}
+    </div>
       </div>
     </>
   );
