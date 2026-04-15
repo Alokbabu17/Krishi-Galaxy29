@@ -12,7 +12,6 @@ import YojnaInfo from "./components/YojnaInfo";
 import KrishiLexa from "./components/KrishiLexa";   // ✅ NEW import
 import BhandarGhar from "./components/BhandarGhar";
 import SmartSichai from "./components/SmartSichai";
-import "./App.css";
 
 function App() {
   return (

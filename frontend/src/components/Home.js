@@ -2,6 +2,9 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import "./Home.css";
 
+
+import News from "./News";
+
 export default function Home() {
   const [weather, setWeather] = useState(null);
 
@@ -40,24 +43,24 @@ export default function Home() {
   }, []);
   const [news, setNews] = useState([]);
 
-useEffect(() => {
-  async function fetchNews() {
-    try {
-      const apiKey = "5cf825d1ef6c429f964c76198066c8f4"; // apna key daal
-      const url = `https://newsapi.org/v2/top-headlines?country=in&apiKey=${apiKey}`;
+  useEffect(() => {
+    async function fetchNews() {
+      try {
+        const apiKey = "5cf825d1ef6c429f964c76198066c8f4"; // apna key daal
+        const url = `https://newsapi.org/v2/top-headlines?country=in&apiKey=${apiKey}`;
 
 
-      const response = await fetch(url);
-      const data = await response.json();
-      if (data.articles) {
-        setNews(data.articles.map(a => a.title));
+        const response = await fetch(url);
+        const data = await response.json();
+        if (data.articles) {
+          setNews(data.articles.map(a => a.title));
+        }
+      } catch (err) {
+        console.error("News fetch error:", err);
       }
-    } catch (err) {
-      console.error("News fetch error:", err);
     }
-  }
-  fetchNews();
-}, []);
+    fetchNews();
+  }, []);
 
 
   return (
@@ -66,14 +69,34 @@ useEffect(() => {
         <div className="hero-glass">
           <h1 className="hero-title">🌱 कृषि Galaxy</h1>
           <h2 className="hero-subtitle">भारतीय किसान पोर्टल</h2>
-          
+
           {/* ✅ News Ticker */}
           <div className="news-ticker-glass">
             <marquee behavior="scroll" direction="left" scrollamount="5">
-              {news.length > 0 ? news.join("  ✦  ") : "⏳ समाचार लोड हो रहा है..."}
+              {news.length > 0 ? news.join("  ✦  ") : "⏳ PM syas that P shree yojnaa started from 3th April Apply now!!!!!!!!"}
             </marquee>
           </div>
         </div>
+
+        {/* 🌟 New Krishi Lexa Intro Slider 🌟 */}
+        <Link to="/krishi-lexa" className="krishi-banner-slider">
+          <div className="slider-track">
+            <div className="slide slide-1">
+              <div className="slide-content-overlay">
+              </div>
+            </div>
+            <div className="slide slide-2">
+              <div className="slide-content-overlay">
+                
+              </div>
+            </div>
+            <div className="slide slide-3">
+              <div className="slide-content-overlay">
+                
+              </div>
+            </div>
+          </div>
+        </Link>
 
         <div className="main-layout">
           <div className="glass-widget calendar-widget">
@@ -115,13 +138,6 @@ useEffect(() => {
               </div>
             </Link>
 
-            <Link to="/krishi-lexa" className="glass-button btn-lexa">
-              <div className="btn-content">
-                <h3>🌾 कृषी-लेक्सा</h3>
-                <p>Ask your AI Voice Assistant</p>
-              </div>
-            </Link>
-
             <Link to="/more" className="glass-button btn-more">
               <div className="btn-content">
                 <h3>🔍 अन्य सेवाएं</h3>
@@ -156,6 +172,9 @@ useEffect(() => {
             <div></div>
           )}
         </div>
+        
+        {/* Render the News slider component only on the Home page */}
+        <News />
       </div>
     </div>
   );

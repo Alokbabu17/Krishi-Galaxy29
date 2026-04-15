@@ -1,4 +1,3 @@
-#suno mai tumnee apne app.py kaa code de rhaa hu tumne jo bhi changes bataye haui tum khud mere is exisiting code me add kr k mujhe ready to paste code de do koi bhi linee badlnaa mt extraa as it is rkhnaa samee smjhe mujhee puraa code final do yee lo abhi kaa app.py "
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 import os
@@ -29,10 +28,45 @@ import numpy as np
 # ================= IOT =================
 import serial
 
+# ================= GEE (NDVI) =================
+import ee
+
 # ---------- ENV ----------
 load_dotenv()
-GROQ_API_KEY     = os.getenv("GROQ_API_KEY")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY")
+
+service_account = os.getenv("GEE_SERVICE_ACCOUNT")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+key_path = os.path.join(BASE_DIR, "credentials.json")
+
+credentials = ee.ServiceAccountCredentials(service_account, key_path)
+ee.Initialize(credentials)
+
+def get_ndvi(lat, lon):
+    try:
+        point = ee.Geometry.Point([lon, lat])
+
+        collection = (
+            ee.ImageCollection("COPERNICUS/S2_SR")
+            .filterBounds(point)
+            .filterDate('2024-01-01', '2026-12-31')
+            .sort('CLOUDY_PIXEL_PERCENTAGE')
+            .first()
+        )
+
+        ndvi = collection.normalizedDifference(['B8', 'B4']).rename('NDVI')
+
+        value = ndvi.reduceRegion(
+            reducer=ee.Reducer.mean(),
+            geometry=point,
+            scale=10
+        ).get('NDVI').getInfo()
+
+        return round(value, 2)
+
+    except:
+        return None
 
 groq_client = Groq(api_key=GROQ_API_KEY)
 
@@ -52,6 +86,7 @@ subsidy_collection  = mongo_db["subsidy_applications"]
 training_collection = mongo_db["training_applications"]
 
 print("✅ MongoDB Connected (krishi_galaxy)")
+print("✅ GEE NDVI Connected")
 
 # ================= YOLO =================
 yolo_model = YOLO("yolov8n.pt")
@@ -79,7 +114,7 @@ def test():
 # ================= VOICE — Krishi Lexa =================
 def _clean_for_tts(text):
     text = re.sub(r'\*{1,3}(.*?)\*{1,3}', r'\1', text, flags=re.DOTALL)
-    text = re.sub(r'_{1,3}(.*?)_{1,3}',   r'\1', text, flags=re.DOTALL)
+    text = re.sub(r'_{1,3}(.*?)_{1,3}', r'\1', text, flags=re.DOTALL)
     text = re.sub(r'\n{3,}', '\n\n', text)
     return text.strip()
 
@@ -96,14 +131,44 @@ def voice_assistant():
     try:
         # Convert to wav
         audio_seg = AudioSegment.from_file(tmp_in.name)
-        wav_path  = tmp_in.name.replace(".webm", ".wav")
+        wav_path = tmp_in.name.replace(".webm", ".wav")
         audio_seg.export(wav_path, format="wav")
 
         # Speech to text
         recognizer = sr.Recognizer()
         with sr.AudioFile(wav_path) as src:
             audio_data = recognizer.record(src)
+
         user_text = recognizer.recognize_google(audio_data, language="hi-IN")
+
+        # ===== NDVI FETCH =====
+        ndvi_text = ""
+
+        if "khet" in user_text and "sehat" in user_text:
+            try:
+                lat = float(request.form.get("lat", 23.2599))
+                lon = float(request.form.get("lon", 77.4126))
+
+                ndvi_value = get_ndvi(lat, lon)
+
+                if ndvi_value is not None:
+                    if ndvi_value > 0.6:
+                        status = "Fasal healthy hai"
+                    elif ndvi_value > 0.3:
+                        status = "Fasal thodi weak hai"
+                    else:
+                        status = "Fasal stress me hai"
+
+                    ndvi_text = f"""
+                    Satellite NDVI:
+                    NDVI Value: {ndvi_value}
+                    Crop Status: {status}
+                    """
+                else:
+                    ndvi_text = "Satellite NDVI data available nahi hai."
+
+            except:
+                ndvi_text = "NDVI fetch error."
 
         # ===== GET SENSOR DATA FROM SMART IRRIGATION =====
         try:
@@ -124,10 +189,12 @@ def voice_assistant():
 
         {sensor_text}
 
+        {ndvi_text}
+
         Kisan ka sawaal:
         {user_text}
 
-        Sensor data ko dhyan me rakhkar simple Hindi me jawab do.
+        Sensor aur satellite data ko dhyan me rakhkar simple Hindi me jawab do.
         """
 
         response = groq_client.chat.completions.create(
@@ -140,13 +207,16 @@ def voice_assistant():
 
         # Text to speech
         mp3_path = os.path.join(tempfile.gettempdir(), "krishi_reply.mp3")
-        asyncio.run(edge_tts.Communicate(clean_reply, "hi-IN-SwaraNeural").save(mp3_path))
+        asyncio.run(
+            edge_tts.Communicate(
+                clean_reply,
+                "hi-IN-SwaraNeural"
+            ).save(mp3_path)
+        )
 
         # Send audio
         with open(mp3_path, "rb") as f:
-         audio_b64 = base64.b64encode(f.read()).decode()
-
-        
+            audio_b64 = base64.b64encode(f.read()).decode()
 
         return jsonify({
             "status": "success",

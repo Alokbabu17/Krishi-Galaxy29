@@ -51,7 +51,6 @@ function KrishiLexa() {
             silenceStart = Date.now();
           } else {
             if (Date.now() - silenceStart > 2000) {
-              // 2 sec silence → stop recording
               recording = false;
               mediaRecorder.stop();
               setStatus("thinking");
@@ -73,32 +72,49 @@ function KrishiLexa() {
         setLoading(true);
 
         try {
-          const response = await fetch("http://localhost:5000/voice", {
-            method: "POST",
-            body: formData,
-          });
+          // ===== LIVE GPS FETCH =====
+          navigator.geolocation.getCurrentPosition(
+            async (position) => {
+              formData.append("lat", position.coords.latitude);
+              formData.append("lon", position.coords.longitude);
 
-          const data = await response.json();
+              const response = await fetch("http://localhost:5000/voice", {
+                method: "POST",
+                body: formData,
+              });
 
-          if (data.status === "success") {
-            setUserText(data.user_text || "");
-            setAnswer(data.reply || "");
+              const data = await response.json();
 
-            if (data.audio) {
-              const audio = new Audio("data:audio/mp3;base64," + data.audio);
-              audio.play();
+              if (data.status === "success") {
+                setUserText(data.user_text || "");
+                setAnswer(data.reply || "");
+
+                if (data.audio) {
+                  const audio = new Audio(
+                    "data:audio/mp3;base64," + data.audio
+                  );
+                  audio.play();
+                }
+              } else {
+                setAnswer("Error: " + data.message);
+              }
+
+              setLoading(false);
+              setStatus("idle");
+            },
+
+            (gpsError) => {
+              setAnswer("GPS Permission/Error: " + gpsError.message);
+              setLoading(false);
+              setStatus("idle");
             }
-          } else {
-            setAnswer("Error: " + data.message);
-          }
+          );
         } catch (err) {
           setAnswer("Request failed: " + err.message);
+          setLoading(false);
+          setStatus("idle");
         }
-
-        setLoading(false);
-        setStatus("idle");
       };
-
     } catch (err) {
       setAnswer("Mic error: " + err.message);
       setStatus("idle");
@@ -150,14 +166,20 @@ function KrishiLexa() {
               </div>
             )}
 
-            <button 
-              className={`mic-btn ${status === 'listening' ? 'pulsing' : ''}`} 
-              onClick={startRecording} 
+            <button
+              className={`mic-btn ${
+                status === "listening" ? "pulsing" : ""
+              }`}
+              onClick={startRecording}
               disabled={loading}
             >
               <span className="mic-icon">🎤</span>
               <span className="btn-text">
-                {loading ? 'Processing...' : (status === 'listening' ? 'Listening...' : 'Tap to Speak')}
+                {loading
+                  ? "Processing..."
+                  : status === "listening"
+                  ? "Listening..."
+                  : "Tap to Speak"}
               </span>
             </button>
           </div>
