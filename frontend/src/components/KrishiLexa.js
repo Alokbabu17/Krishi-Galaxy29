@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import "./KrishiLexa.css";
 
 function KrishiLexa() {
@@ -7,6 +7,128 @@ function KrishiLexa() {
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("idle");
 
+  const polygonRef = useRef(null);
+  const mapRef = useRef(null);
+  const overlayRef = useRef(null);
+
+  // ================= MAP LOAD =================
+  useEffect(() => {
+    loadMap();
+    // eslint-disable-next-line
+  }, []);
+
+  const loadMap = () => {
+    const script = document.createElement("script");
+    script.src =
+      "https://maps.googleapis.com/maps/api/js?key=AIzaSyCSJMETyxQJVmXI9gC6-lhomf9gBvGMDTc&libraries=drawing";
+    script.async = true;
+    script.onload = initMap;
+    document.body.appendChild(script);
+  };
+
+  const initMap = () => {
+    navigator.geolocation.getCurrentPosition((pos) => {
+      const location = {
+        lat: pos.coords.latitude,
+        lng: pos.coords.longitude,
+      };
+
+      const map = new window.google.maps.Map(
+        document.getElementById("map"),
+        {
+          center: location,
+          zoom: 16,
+          mapTypeId: "satellite",
+        }
+      );
+
+      mapRef.current = map;
+
+      const drawingManager = new window.google.maps.drawing.DrawingManager({
+        drawingMode: window.google.maps.drawing.OverlayType.POLYGON,
+        drawingControl: true,
+        drawingControlOptions: {
+          position: window.google.maps.ControlPosition.TOP_CENTER,
+          drawingModes: ["polygon"],
+        },
+      });
+
+      drawingManager.setMap(map);
+
+      window.google.maps.event.addListener(
+        drawingManager,
+        "overlaycomplete",
+        (event) => {
+          if (polygonRef.current) {
+            polygonRef.current.setMap(null);
+          }
+
+          polygonRef.current = event.overlay;
+        }
+      );
+    });
+  };
+
+  // ================= GET POLYGON COORDS =================
+  const getPolygonCoords = () => {
+    if (!polygonRef.current) return null;
+
+    const path = polygonRef.current.getPath();
+    let coords = [];
+
+    for (let i = 0; i < path.getLength(); i++) {
+      const point = path.getAt(i);
+      coords.push([point.lng(), point.lat()]);
+    }
+
+    return coords;
+  };
+
+  // ================= GET BOUNDS =================
+  const getBounds = () => {
+    const bounds = new window.google.maps.LatLngBounds();
+    const path = polygonRef.current.getPath();
+
+    for (let i = 0; i < path.getLength(); i++) {
+      bounds.extend(path.getAt(i));
+    }
+
+    return bounds;
+  };
+
+  // ================= SHOW NDVI OVERLAY =================
+  const showNDVIOverlay = (imageUrl) => {
+    if (!polygonRef.current || !mapRef.current) return;
+
+    const bounds = getBounds();
+
+    if (overlayRef.current) {
+      overlayRef.current.setMap(null);
+    }
+
+    const overlay = new window.google.maps.GroundOverlay(
+      imageUrl,
+      bounds
+    );
+
+    overlay.setMap(mapRef.current);
+    overlayRef.current = overlay;
+
+    // 🔥 Zoom into field
+    mapRef.current.fitBounds(bounds);
+
+    // 🔥 Animation (fade effect)
+    const img = document.querySelector("img[src='" + imageUrl + "']");
+    if (img) {
+      img.style.opacity = 0;
+      img.style.transition = "opacity 1.5s ease-in-out";
+      setTimeout(() => {
+        img.style.opacity = 0.85;
+      }, 100);
+    }
+  };
+
+  // ================= VOICE =================
   const startRecording = async () => {
     try {
       setStatus("listening");
@@ -31,7 +153,6 @@ function KrishiLexa() {
 
       mediaRecorder.start();
 
-      // Silence detection loop
       const detectSilence = () => {
         if (!recording) return;
 
@@ -72,11 +193,15 @@ function KrishiLexa() {
         setLoading(true);
 
         try {
-          // ===== LIVE GPS FETCH =====
           navigator.geolocation.getCurrentPosition(
             async (position) => {
               formData.append("lat", position.coords.latitude);
               formData.append("lon", position.coords.longitude);
+
+              const coords = getPolygonCoords();
+              if (coords) {
+                formData.append("coords", JSON.stringify(coords));
+              }
 
               const response = await fetch("http://localhost:5000/voice", {
                 method: "POST",
@@ -88,6 +213,11 @@ function KrishiLexa() {
               if (data.status === "success") {
                 setUserText(data.user_text || "");
                 setAnswer(data.reply || "");
+
+                // 🔥 NDVI OVERLAY SHOW
+                if (data.ndvi_image) {
+                  showNDVIOverlay(data.ndvi_image);
+                }
 
                 if (data.audio) {
                   const audio = new Audio(
@@ -102,9 +232,8 @@ function KrishiLexa() {
               setLoading(false);
               setStatus("idle");
             },
-
             (gpsError) => {
-              setAnswer("GPS Permission/Error: " + gpsError.message);
+              setAnswer("GPS Error: " + gpsError.message);
               setLoading(false);
               setStatus("idle");
             }
@@ -124,65 +253,56 @@ function KrishiLexa() {
   return (
     <div className="krishi-lexa-container">
       <div className="overlay">
-        <div className="lexa-card">
-          <div className="lexa-header">
-            <div className="ai-orb"></div>
-            <h1 className="welcome-text">कृषि लेक्सा</h1>
-            <p className="sub-text">Aapki Modern Krishi Sahayak</p>
-          </div>
+        <div className="main-layout">
 
-          <div className="chat-container">
-            {userText && (
-              <div className="message user-message">
-                <span className="label">🧑 Aapne poocha:</span>
-                <p>{userText}</p>
-              </div>
-            )}
+          <div className="lexa-card">
+            <div className="lexa-header">
+              <div className="ai-orb"></div>
+              <h1 className="welcome-text">कृषि लेक्सा</h1>
+              <p className="sub-text">Aapki Modern Krishi Sahayak</p>
+            </div>
 
-            {status === "thinking" && (
-              <div className="message ai-message thinking-message">
-                <span className="label">🤖 Krishi Lexa:</span>
-                <div className="dot-typing"></div>
-              </div>
-            )}
-
-            {answer && status !== "thinking" && (
-              <div className="message ai-message">
-                <span className="label">🤖 Krishi Lexa:</span>
-                <p>{answer}</p>
-              </div>
-            )}
-          </div>
-
-          <div className="action-area">
-            {status === "listening" && (
-              <div className="listening-indicator">
-                <span>Sun rahi hoon...</span>
-                <div className="wave-container">
-                  <div className="wave"></div>
-                  <div className="wave"></div>
-                  <div className="wave"></div>
+            <div className="chat-container">
+              {userText && (
+                <div className="message user-message">
+                  <span className="label">🧑 Aapne poocha:</span>
+                  <p>{userText}</p>
                 </div>
-              </div>
-            )}
+              )}
 
-            <button
-              className={`mic-btn ${
-                status === "listening" ? "pulsing" : ""
-              }`}
-              onClick={startRecording}
-              disabled={loading}
-            >
-              <span className="mic-icon">🎤</span>
-              <span className="btn-text">
-                {loading
-                  ? "Processing..."
-                  : status === "listening"
-                  ? "Listening..."
-                  : "Tap to Speak"}
-              </span>
-            </button>
+              {status === "thinking" && (
+                <div className="message ai-message thinking-message">
+                  <span className="label">🤖 Krishi Lexa:</span>
+                  <div className="dot-typing"></div>
+                </div>
+              )}
+
+              {answer && status !== "thinking" && (
+                <div className="message ai-message">
+                  <span className="label">🤖 Krishi Lexa:</span>
+                  <p>{answer}</p>
+                </div>
+              )}
+            </div>
+
+            <div className="action-area">
+              <button
+                className="mic-btn"
+                onClick={startRecording}
+                disabled={loading}
+              >
+                🎤 {loading ? "Processing..." : "Tap to Speak"}
+              </button>
+            </div>
           </div>
+
+          <div className="map-container">
+            <div className="map-overlay">
+              📍 Apna khet draw kare
+            </div>
+            <div id="map"></div>
+          </div>
+
         </div>
       </div>
     </div>

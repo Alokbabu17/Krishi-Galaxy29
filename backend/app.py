@@ -7,6 +7,7 @@ import requests
 import threading
 import time as _time
 from threading import Lock
+import json
 
 # ================= MongoDB =================
 from pymongo import MongoClient
@@ -43,19 +44,20 @@ key_path = os.path.join(BASE_DIR, "credentials.json")
 credentials = ee.ServiceAccountCredentials(service_account, key_path)
 ee.Initialize(credentials)
 
+# ================= NDVI (POINT - OLD) =================
 def get_ndvi(lat, lon):
     try:
         point = ee.Geometry.Point([lon, lat])
 
         collection = (
-            ee.ImageCollection("COPERNICUS/S2_SR")
+            ee.ImageCollection("COPERNICUS/S2_SR_HARMONIZED")
             .filterBounds(point)
-            .filterDate('2024-01-01', '2026-12-31')
+            .filterDate('2026-04-10', '2026-04-19')
             .sort('CLOUDY_PIXEL_PERCENTAGE')
-            .first()
         )
-
-        ndvi = collection.normalizedDifference(['B8', 'B4']).rename('NDVI')
+        collection = collection.select(['B4', 'B8'])
+        image = collection.sort('system:time_start', False).first()
+        ndvi = image.normalizedDifference(['B8', 'B4']).rename('NDVI')
 
         value = ndvi.reduceRegion(
             reducer=ee.Reducer.mean(),
@@ -68,13 +70,60 @@ def get_ndvi(lat, lon):
     except:
         return None
 
+# ================= NDVI (POLYGON + IMAGE) =================
+def get_ndvi_polygon(coords):
+    try:
+        print("Coords received:", coords)
+        polygon = ee.Geometry.Polygon([coords])
+
+        collection = (
+         ee.ImageCollection("COPERNICUS/S2_SR_HARMONIZED")
+         .filterBounds(polygon)
+         .filterDate('2026-04-10', '2026-04-19')
+         .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 20))
+     )
+        collection = collection.select(['B4', 'B8'])
+        
+        image = collection.sort('system:time_start', False).first()
+
+        ndvi = image.normalizedDifference(['B8', 'B4']).rename('NDVI')
+
+        # ===== VALUE =====
+        value = ndvi.reduceRegion(
+            reducer=ee.Reducer.mean(),
+            geometry=polygon,
+            scale=10,
+            maxPixels=1e9
+        ).get('NDVI').getInfo()
+
+        ndvi_value = round(value, 2) if value else None
+        print("NDVI Value:", ndvi_value)
+        
+        # ===== IMAGE (NEW 🔥) =====
+        ndvi_vis = ndvi.visualize(
+            min=0,
+            max=1,
+            palette=['red', 'yellow', 'green']
+        )
+
+        ndvi_url = ndvi_vis.getThumbURL({
+            'region': polygon,
+            'scale': 10
+        })
+
+        return ndvi_value, ndvi_url
+
+    except Exception as e:
+        print("NDVI ERROR:", e)
+        return None, None
+
 groq_client = Groq(api_key=GROQ_API_KEY)
 
 # ---------- APP ----------
 app = Flask(__name__)
 CORS(app)
 
-# ================= MongoDB Connection =================
+# ================= MongoDB =================
 MONGO_URI = "mongodb://localhost:27017"
 mongo_client = MongoClient(MONGO_URI)
 
@@ -111,7 +160,7 @@ def home():
 def test():
     return {"message": "Flask connected successfully"}
 
-# ================= VOICE — Krishi Lexa =================
+# ================= VOICE =================
 def _clean_for_tts(text):
     text = re.sub(r'\*{1,3}(.*?)\*{1,3}', r'\1', text, flags=re.DOTALL)
     text = re.sub(r'_{1,3}(.*?)_{1,3}', r'\1', text, flags=re.DOTALL)
@@ -129,27 +178,31 @@ def voice_assistant():
     tmp_in.close()
 
     try:
-        # Convert to wav
         audio_seg = AudioSegment.from_file(tmp_in.name)
         wav_path = tmp_in.name.replace(".webm", ".wav")
         audio_seg.export(wav_path, format="wav")
 
-        # Speech to text
         recognizer = sr.Recognizer()
         with sr.AudioFile(wav_path) as src:
             audio_data = recognizer.record(src)
 
         user_text = recognizer.recognize_google(audio_data, language="hi-IN")
 
-        # ===== NDVI FETCH =====
+        # ===== NDVI =====
         ndvi_text = ""
+        ndvi_url = None
 
-        if "khet" in user_text and "sehat" in user_text:
+        if any(word in user_text.lower() for word in ["khet", "खेत", "hariyali", "हरियाली"]):
             try:
-                lat = float(request.form.get("lat", 23.2599))
-                lon = float(request.form.get("lon", 77.4126))
+                coords = request.form.get("coords")
 
-                ndvi_value = get_ndvi(lat, lon)
+                if coords:
+                    coords = json.loads(coords)
+                    ndvi_value, ndvi_url = get_ndvi_polygon(coords)
+                else:
+                    lat = float(request.form.get("lat", 23.2599))
+                    lon = float(request.form.get("lon", 77.4126))
+                    ndvi_value = get_ndvi(lat, lon)
 
                 if ndvi_value is not None:
                     if ndvi_value > 0.6:
@@ -170,7 +223,7 @@ def voice_assistant():
             except:
                 ndvi_text = "NDVI fetch error."
 
-        # ===== GET SENSOR DATA FROM SMART IRRIGATION =====
+        # ===== SENSOR =====
         try:
             sensor = requests.get("http://localhost:5001/get-data").json()
             sensor_text = f"""
@@ -183,7 +236,7 @@ def voice_assistant():
         except:
             sensor_text = "Sensor data available nahi hai."
 
-        # ===== AI PROMPT =====
+        # ===== AI =====
         final_prompt = f"""
         Tum Krishi Lexa ho ek smart krishi sahayak.
 
@@ -194,7 +247,7 @@ def voice_assistant():
         Kisan ka sawaal:
         {user_text}
 
-        Sensor aur satellite data ko dhyan me rakhkar simple Hindi me jawab do.
+        Simple Hindi me jawab do.
         """
 
         response = groq_client.chat.completions.create(
@@ -205,16 +258,12 @@ def voice_assistant():
         reply_text = response.choices[0].message.content
         clean_reply = _clean_for_tts(reply_text)
 
-        # Text to speech
+        # ===== TTS =====
         mp3_path = os.path.join(tempfile.gettempdir(), "krishi_reply.mp3")
         asyncio.run(
-            edge_tts.Communicate(
-                clean_reply,
-                "hi-IN-SwaraNeural"
-            ).save(mp3_path)
+            edge_tts.Communicate(clean_reply, "hi-IN-SwaraNeural").save(mp3_path)
         )
 
-        # Send audio
         with open(mp3_path, "rb") as f:
             audio_b64 = base64.b64encode(f.read()).decode()
 
@@ -222,7 +271,8 @@ def voice_assistant():
             "status": "success",
             "user_text": user_text,
             "reply": clean_reply,
-            "audio": audio_b64
+            "audio": audio_b64,
+            "ndvi_image": ndvi_url   # 🔥 NEW OUTPUT
         })
 
     except Exception as e:
