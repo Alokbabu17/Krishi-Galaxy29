@@ -123,18 +123,7 @@ groq_client = Groq(api_key=GROQ_API_KEY)
 app = Flask(__name__)
 CORS(app)
 
-# ================= MongoDB =================
-MONGO_URI = "mongodb://localhost:27017"
-mongo_client = MongoClient(MONGO_URI)
 
-mongo_db = mongo_client["Krishi_galaxy"]
-
-market_collection   = mongo_db["market_rates"]
-drone_collection    = mongo_db["drone_applications"]
-subsidy_collection  = mongo_db["subsidy_applications"]
-training_collection = mongo_db["training_applications"]
-
-print("✅ MongoDB Connected (krishi_galaxy)")
 print("✅ GEE NDVI Connected")
 
 # ================= YOLO =================
