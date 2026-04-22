@@ -51,3 +51,4 @@ Thumbs.db
 *.pth
 *.h5
 *.onnx
+backend/credentials.json

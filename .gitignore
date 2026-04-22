@@ -23,3 +23,4 @@ backend/.env
 
 # VS Code
 .vscode/
+backend/credentials.json
