@@ -1,43 +1,84 @@
-.navbar {
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600;700&family=Outfit:wght@300;400;600;700;900&display=swap');
+
+:root {
+  --color-bg-dark: #020905;
+  --color-green-neon: #39ff14;
+  --color-green-teal: #00f2fe;
+  --color-glass-bg: rgba(255, 255, 255, 0.03);
+  --color-glass-border: rgba(255, 255, 255, 0.08);
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--color-bg-dark);
+  font-family: 'Outfit', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #ffffff;
+  overflow-x: hidden;
+}
+
+/* Beautiful Animated Mesh Gradient Background */
+.mesh-background {
+  min-height: 100vh;
+  width: 100vw;
+  background: radial-gradient(circle at 15% 50%, rgba(20, 80, 40, 0.4), transparent 50%),
+              radial-gradient(circle at 85% 30%, rgba(10, 40, 60, 0.5), transparent 50%),
+              radial-gradient(circle at 50% 80%, rgba(5, 25, 10, 0.9), transparent 60%);
+  background-color: var(--color-bg-dark);
+  background-size: 200% 200%;
+  animation: meshFlow 20s ease infinite;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: url("public/images/img4.jpg");
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: 100% 100%;
-  padding: 10px 20px;
-  color: rgb(64, 33, 121);
+  flex-direction: column;
 }
 
-.nav-links {
-  list-style: none;
+@keyframes meshFlow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.app-layout {
   display: flex;
-  gap: 15px;
+  flex-direction: column;
+  min-height: 100vh;
 }
 
-.nav-links a {
-  color: white;
-  text-decoration: none;
-  font-weight: bold;
+.main-content {
+  flex: 1;
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 20px 20px;
+  padding-top: 100px; /* Space for the floating dock */
+  box-sizing: border-box;
 }
 
-.search-box {
-  padding: 5px;
-  border-radius: 5px;
-  border: none;
+/* Global Utility for Text Gradients */
+.text-gradient-green {
+  background: linear-gradient(to right, var(--color-green-neon), #a8ff78);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-.home {
-  text-align: center;
-  margin-top: 40px;
+.text-gradient-blue {
+  background: linear-gradient(to right, #4facfe, var(--color-green-teal));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
-.button-grid {
-  display: grid;
-  gap: 5px;
-  max-width: 1000px;
-  margin: 30px auto;
+/* Scrollbar customization */
+::-webkit-scrollbar {
+  width: 8px;
 }
-
-
+::-webkit-scrollbar-track {
+  background: rgba(0,0,0,0.5);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(168, 255, 120, 0.3);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(168, 255, 120, 0.6);
+}
