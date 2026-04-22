@@ -161,15 +161,34 @@
   border-color: rgba(0, 242, 254, 0.3);
   box-shadow: 0 0 20px rgba(0, 242, 254, 0.1);
   display: flex;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Background image with continuous effect */
+.bento-lexa-ai::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: url('../public/images/lexa.png') center/cover no-repeat;
+  opacity: 0.25;
+  z-index: 0;
+  animation: breathingBg 8s ease-in-out infinite alternate;
+}
+
+@keyframes breathingBg {
+  0% { transform: scale(1); filter: brightness(1) saturate(1); }
+  100% { transform: scale(1.1); filter: brightness(1.2) saturate(1.2); opacity: 0.4; }
 }
 
 .lexa-aurora {
   position: absolute;
   top: -50%; left: -50%; width: 200%; height: 200%;
-  background: radial-gradient(circle at center, rgba(0, 242, 254, 0.15), transparent 60%);
+  background: radial-gradient(circle at center, rgba(0, 242, 254, 0.2), transparent 60%);
   animation: rotateAurora 10s linear infinite;
-  z-index: 0;
+  z-index: 1;
   pointer-events: none;
+  mix-blend-mode: screen;
 }
 
 @keyframes rotateAurora {

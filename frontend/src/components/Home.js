@@ -177,13 +177,7 @@ export default function Home() {
             </div>
           </Link>
 
-          <Link to="/smart-sichai" className="bento-box action-box box-aqua">
-            <div className="bento-content">
-              <div className="box-icon">💧</div>
-              <h3 className="hi font-bold">स्मार्ट सिंचाई</h3>
-              <p className="en">Smart Irrigation</p>
-            </div>
-          </Link>
+          
 
           <Link to="/bhandar-ghar" className="bento-box action-box box-purple">
             <div className="bento-content">
