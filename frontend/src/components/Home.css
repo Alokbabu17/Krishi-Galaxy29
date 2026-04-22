@@ -19,7 +19,6 @@ body {
 .home-overlay {
   min-height: 100vh;
   width: 100%;
-
   backdrop-filter: blur(2px);
   -webkit-backdrop-filter: blur(8px);
   padding: 30px 20px;
